@@ -1,0 +1,45 @@
+variables:
+  CLOUD_PLATFORM: "openshift"
+
+deploy_openshift:
+    image: openshift/origin-cli
+    stage: deploy
+    environment: openshift
+    only:
+        - master
+    script:
+        - echo "Deploying for OpenShift Cloud Platform"
+        - oc login --token=eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJjbG91ZGFwcCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJteWJ1aWxkZXItdG9rZW4tanRxa2MiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoibXlidWlsZGVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiMzRlNWU4ZjYtN2ZhNC0xMWU4LWI4MjUtMDJhYzNhMWY5ZDYxIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OmNsb3VkYXBwOm15YnVpbGRlciJ9.WzrezFIjNTG0NqSGHl2HqlL-976tBQZNFjewDslkBs-caU0cIiydpShjoX3nWNODPQ77h3jMi4fOTeINzZvOidrkEB901brIYpLImNT0YkobkkN3ORCM1P2RhoZtctdJkZqhoQjrlxtRLcMh-VN-fzgb1gZGYIbtTEoWcFyVg6o4DU5xtdd8eybnsPM54jyonyk9UaFEMXtE5A6UdF6UjABZMmeF2O3RCP_WGblkWCDkZJR_8zPNQVkA7u-6_ve2W7PqmJl2L60Kj8jVWH-50DQUDBQhspAi6FQJCR5VClI3qZlODLr98ut3bUiJlY0FgSyHi_KDEY3_ljVrqtPClA https://console.starter-ca-central-1.openshift.com
+        - oc start-build cloudapp
+        - oc logout
+    when: manual
+
+deploy_azure:
+    image: centos
+    stage: deploy
+    environment: azure
+    only:
+        - master
+    script:
+        - echo "Deploying for Azure Cloud Platform"
+        - sed -i 's/^APP_ENV=.*/APP_ENV=azure/' .env
+        - yum install zip -y
+        - /usr/bin/zip -r cloudapp.zip .
+        - curl -X POST -u mybuilder:Test123! --data-binary @"cloudapp.zip" https://markwsapp.scm.azurewebsites.net/api/ZipDeploy
+    when: manual
+
+deploy_google:
+    image: google/cloud-sdk
+    stage: deploy
+    environment: google
+    only:
+        - master
+    script:
+        - echo "Deploying for Google Cloud Platform"
+        - echo $DEPLOY_KEY_FILE_PRODUCTION > /tmp/$CI_PIPELINE_ID.json
+        - sed -i 's/^APP_ENV=.*/APP_ENV=google/' .env
+        - gcloud auth activate-service-account --key-file /tmp/$CI_PIPELINE_ID.json
+        - gcloud --quiet --project $PROJECT_ID_PRODUCTION app deploy
+    after_script:
+        - rm /tmp/$CI_PIPELINE_ID.json
+    when: manual

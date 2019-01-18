@@ -1,0 +1,7 @@
+runtime: php72
+env: standard
+
+env_variables:
+  APP_LOG: errorlog
+  APP_KEY: base64:law5wIwE8KAUMixI70hQp85mUI5jj06jcKPlV2wGeo4=
+  APP_STORAGE: /tmp
